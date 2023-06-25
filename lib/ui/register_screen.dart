@@ -1,21 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_18_firebase_login/firebase_helper.dart';
-import 'package:flutter_18_firebase_login/screens/profile_screen.dart';
-import 'package:flutter_18_firebase_login/screens/register_screen.dart';
+import 'package:flutter_18_firebase_login/ui/login_screen.dart';
+import 'package:flutter_18_firebase_login/ui/profile_screen.dart';
 
-class LoginWidget extends StatefulWidget {
-  const LoginWidget({Key? key}) : super(key: key);
+class RegisterWidget extends StatefulWidget {
+  const RegisterWidget({Key? key}) : super(key: key);
 
   @override
-  State<LoginWidget> createState() => _LoginWidgetState();
+  State<RegisterWidget> createState() => _RegisterWidgetState();
 }
 
-class _LoginWidgetState extends State<LoginWidget> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+class _RegisterWidgetState extends State<RegisterWidget> {
+  String? _name;
   String? _email;
   String? _password;
+
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _rePasswordController = TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   bool _showPassword = false;
   bool _isPressed = false;
 
@@ -34,21 +38,31 @@ class _LoginWidgetState extends State<LoginWidget> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
+                buildNameText(),
+                buildNameField(),
+                const SizedBox(
+                  height: 15,
+                ),
                 buildEmailText(),
                 buildEmailField(),
                 const SizedBox(
-                  height: 25,
+                  height: 15,
                 ),
                 buildPasswordText(),
                 buildPasswordField(),
                 const SizedBox(
-                  height: 25,
+                  height: 15,
                 ),
-                buildElevatedButtonLogin(),
+                buildRePasswordText(),
+                buildRePasswordField(),
                 const SizedBox(
-                  height: 80,
+                  height: 40,
                 ),
-                buildNewAccountTextButton(),
+                buildElevatedButtonRegister(),
+                const SizedBox(
+                  height: 50,
+                ),
+                buildOldAccountTextButton(),
               ],
             ),
           ),
@@ -57,9 +71,44 @@ class _LoginWidgetState extends State<LoginWidget> {
     );
   }
 
+  Widget buildNameText() {
+    return const Text(
+      'Your name*',
+      style: TextStyle(
+        fontFamily: 'Inter-SemiBold',
+        fontSize: 16,
+        color: Color(0xFF000000),
+      ),
+    );
+  }
+
+  Widget buildNameField() {
+    return TextFormField(
+      controller: _nameController,
+      style: const TextStyle(
+        fontFamily: 'Inter-SemiBold',
+        fontSize: 16,
+        color: Color(0xFF000000),
+      ),
+      decoration: const InputDecoration(
+        border: InputBorder.none,
+        fillColor: Color(0xFFD9D9D9),
+        filled: true,
+      ),
+      keyboardType: TextInputType.name,
+      validator: (value) {
+        if (value!.isEmpty) {
+          return 'Enter your name';
+        }
+        return null;
+      },
+      onChanged: (value) => setState(() => _name = value),
+    );
+  }
+
   Widget buildEmailText() {
     return const Text(
-      'Email',
+      'Email*',
       style: TextStyle(
         fontFamily: 'Inter-SemiBold',
         fontSize: 16,
@@ -97,7 +146,7 @@ class _LoginWidgetState extends State<LoginWidget> {
 
   Widget buildPasswordText() {
     return const Text(
-      'Password',
+      'Password*',
       style: TextStyle(
         fontFamily: 'Inter-SemiBold',
         fontSize: 16,
@@ -130,11 +179,59 @@ class _LoginWidgetState extends State<LoginWidget> {
         ),
       ),
       obscureText: !_showPassword,
+      textInputAction: TextInputAction.next,
       validator: (value) {
         if (value!.isEmpty) {
           return 'Enter a password';
         }
-        if (_password != _passwordController.text) {
+        if (value.length < 6) {
+          return 'Password must be at least 6 characters';
+        }
+        return null;
+      },
+      onChanged: (value) => setState(() => _password = value),
+    );
+  }
+
+  Widget buildRePasswordText() {
+    return const Text(
+      'Repeat password*',
+      style: TextStyle(
+        fontFamily: 'Inter-SemiBold',
+        fontSize: 16,
+        color: Color(0xFF000000),
+      ),
+    );
+  }
+
+  Widget buildRePasswordField() {
+    return TextFormField(
+      style: const TextStyle(
+        fontFamily: 'Inter-SemiBold',
+        fontSize: 16,
+        color: Color(0xFF000000),
+      ),
+      decoration: InputDecoration(
+        border: InputBorder.none,
+        fillColor: const Color(0xFFD9D9D9),
+        filled: true,
+        suffixIcon: IconButton(
+          icon: Icon(
+            _showPassword ? Icons.visibility : Icons.visibility_off,
+          ),
+          onPressed: () {
+            setState(() {
+              _showPassword = !_showPassword;
+            });
+          },
+        ),
+      ),
+      obscureText: !_showPassword,
+      validator: (value) {
+        if (value!.isEmpty) {
+          return 'Repeat the password';
+        }
+        if (value != _passwordController.text) {
           return 'Incorrect password';
         }
         return null;
@@ -143,46 +240,49 @@ class _LoginWidgetState extends State<LoginWidget> {
     );
   }
 
-  Widget buildElevatedButtonLogin() {
+  Widget buildElevatedButtonRegister() {
     return Center(
       child: ElevatedButton(
         onPressed: () async {
           if (_formKey.currentState!.validate()) {
+            final name = _nameController.text;
             final email = _emailController.text;
             final password = _passwordController.text;
-            // TODO
-            final success = await FirebaseHelper.login(email, password);
+
+// TODO
+            final success =
+                await FirebaseHelper.register(name, email, password);
             if (success) {
-              // ignore: use_build_context_synchronously
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) {
                   return const ProfileWidget();
                 }),
               );
-              //   }
-              // } else {
-              //   ScaffoldMessenger.of(context).showSnackBar(
-              //     const SnackBar(
-              //       backgroundColor: Colors.red,
-              //       content: Text('Wrong email or password'),
-              //     ),
-              //   );
-              // }
+              // ignore: use_build_context_synchronously
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Successful authorization'),
+                  content: Text('Registration completed'),
                   backgroundColor: Color(0xFF17E444),
                 ),
               );
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Incorrect email or password'),
-                  backgroundColor: Colors.red,
-                ),
-              );
             }
+            // else
+            // {
+            //   ScaffoldMessenger.of(context).showSnackBar(
+            //     const SnackBar(
+            //       backgroundColor: Colors.red,
+            //       content: Text('Something went wrong'),
+            //     ),
+            //   );
+            // }
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                backgroundColor: Colors.red,
+                content: Text('Passwords are not the same'),
+              ),
+            );
           }
         },
         style: ElevatedButton.styleFrom(
@@ -193,7 +293,7 @@ class _LoginWidgetState extends State<LoginWidget> {
           ),
         ),
         child: const Text(
-          'Login',
+          'Register',
           style: TextStyle(
             fontFamily: 'Inter-SemiBold',
             color: Color(0xFF1A1717),
@@ -204,11 +304,11 @@ class _LoginWidgetState extends State<LoginWidget> {
     );
   }
 
-  Widget buildNewAccountTextButton() {
+  Widget buildOldAccountTextButton() {
     return Center(
       child: TextButton(
         child: Text(
-          'CREATE NEW ACCOUNT',
+          'ALREADY REGISTERED',
           style: TextStyle(
             fontFamily: 'Inter-SemiBold',
             fontSize: 16,
@@ -221,11 +321,13 @@ class _LoginWidgetState extends State<LoginWidget> {
             _isPressed = true;
           });
           await Future.delayed(const Duration(milliseconds: 50));
+
+          // TODO
           // ignore: use_build_context_synchronously
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) {
-              return const RegisterWidget();
+              return LoginWidget();
             }),
           );
         },
